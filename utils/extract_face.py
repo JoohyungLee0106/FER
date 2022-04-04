@@ -7,7 +7,7 @@ import argparse
 import torch
 import shutil
 import random
-
+# This code uses MTCNN from   https://github.com/timesler/facenet-pytorch
 parser = argparse.ArgumentParser(description='Extract face portion and save')
 parser.add_argument('--input', default='../data/raw_images_eng/ANGRY', help='directory where raw images are saved')
 parser.add_argument('--output', default='../data/face_images_eng/ANGRY', help='directory where cropped images will be saved')
@@ -18,6 +18,7 @@ parser.add_argument('--face-margin', default=15, type=int, help='additional spat
 parser.add_argument('--hierarchy-level', default=1, type=int, help='hierarchy level of files saved')
 parser.add_argument('--gpu', default=0, type=int, help='hierarchy level of files saved')
 parser.add_argument('--num-images', default=0, type=int, help='number of images to use per emotion category. Max: 7000')
+parser.add_argument('--seed', default=3, type=int, help='seed for shuffle')
 
 def main():
     args = parser.parse_args()
@@ -43,13 +44,17 @@ def main():
 
     pp = glob.glob(args.input + ('/*' * args.hierarchy_level) + f'.{args.file_type}')
     #pp.sort()
-    random.seed(3)
+    random.seed(args.seed)
     random.shuffle(pp)
 
     if args.num_images > 0:
+        print(f'Extracting faces from the first {args.num_images} images...')
         pp = pp[:args.num_images]
     elif args.num_images < 0:
+        print(f'Extracting faces from the last {args.num_images} images...')
         pp = pp[args.num_images::]
+    elif args.num_images == 0:
+        print(f'Extracting faces from all images...')
 
     if args.num_process > 2:
         #pass

@@ -2,6 +2,8 @@ import torch
 import torchvision
 from torch.utils.mobile_optimizer import optimize_for_mobile
 
+# Refer:    https://pytorch.org/mobile/android/
+
 model = torchvision.models.mobilenet_v2(pretrained=True)
 model.eval()
 example = torch.rand(1, 3, 224, 224)

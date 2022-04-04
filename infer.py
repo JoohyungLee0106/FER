@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 from utils.transforms import NormalizePerImage
 import glob
 import shutil
-from utils.transforms import transformation_val
 
 parser = argparse.ArgumentParser(description='Emotion inference from cropped face image')
 parser.add_argument('--data', type=str, default='/home/keti/storage/dataset/kface_cropped/test')
@@ -78,7 +77,6 @@ def main():
         # model.load_state_dict(checkpoint['state_dict'])
         y_pred = []
         y_true = []
-        scaler = torch.cuda.amp.GradScaler()
 
         with torch.no_grad():
             with torch.cuda.amp.autocast():

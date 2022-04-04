@@ -2,67 +2,21 @@ import torch
 import torchvision.transforms as transforms
 # from randaugment import RandAugment
 
-
-def augmentations(config):
-    transform = {
-        'train':
-            transforms.Compose([
-                # RandAugment(),
-                transforms.RandomResizedCrop(224, scale=(0.90, 1.0)),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                #NormalizePerImage(),
-                transforms.Normalize(mean=config['statistics_mean'],
-                                     std=config['statistics_stddev'])
-            ]),
-
-        'validation':
-            transforms.Compose([
-                transforms.CenterCrop(212),
-                transforms.Resize(224),
-                transforms.ToTensor(),
-                # NormalizePerImage(),
-                transforms.Normalize(mean=config['statistics_mean'],
-                                     std=config['statistics_stddev'])
-                ]),
-
-        'test':
-            transforms.Compose([
-                # transforms.TenCrop(224),  # this is a list of PIL Images
-                # transforms.Lambda(lambda crops: torch.stack([transforms.ToTensor()(crop) for crop in crops]))
-                # transforms.Lambda(lambda crops: torch.stack([transforms.ToTensor()(crop) for crop in crops])),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=config['statistics_mean'],
-                                     std=config['statistics_stddev'])
-                # transforms.Lambda(lambda crops:
-                ])
-    }
-    return transform
-
-
-def transformation_train(config):
-    transform =transforms.Compose([
-            # RandAugment(),
-            transforms.RandomResizedCrop(224, scale=(0.90, 1.0)),
+def transforms_train():
+    return transforms.Compose([
+            transforms.RandomResizedCrop(160, scale=(0.90, 1.0)),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
-            #NormalizePerImage(),
-            transforms.Normalize(mean=config['statistics_mean'],
-                                 std=config['statistics_stddev'])
-    ])
-    return transform
+            NormalizePerImage(),
+        ])
 
-def transformation_val():
-    transform =transforms.Compose([
-            # 224 * 0.95
+def transforms_test():
+    return transforms.Compose([
             transforms.CenterCrop(152),
             transforms.Resize(160),
             transforms.ToTensor(),
             NormalizePerImage(),
-            # transforms.Normalize(mean=config['statistics_mean'],
-            #                      std=config['statistics_stddev'])
-    ])
-    return transform
+        ])
 
 
 class NormalizePerImage(torch.nn.Module):

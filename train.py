@@ -4,7 +4,6 @@ import random
 import shutil
 import time
 import warnings
-
 import torch
 import torch.nn.parallel
 import torch.backends.cudnn as cudnn
@@ -16,9 +15,9 @@ import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from utils.scheduler import CosineAnnealingWarmUpSingle, CosineAnnealingWarmUpRestarts
-import torchvision.models as models
-# import model.efficientNetV2 as models
-from utils.transforms import NormalizePerImage
+# import torchvision.models as models
+import model as models
+from utils.transforms import transforms_train, transforms_test, NormalizePerImage
 import math
 from utils.losses import *
 from utils import LARC
@@ -27,16 +26,16 @@ from utils import LARC
 parser = argparse.ArgumentParser(description='PyTorch FER Training')
 # parser.add_argument('data', metavar='DIR',
 #                     help='path to dataset')
-parser.add_argument('--model-version', metavar='ARCH', default='mobilenet_v3_large',
-                    choices=['effnetv2_s', 'effnetv2_m', 'effnetv2_l', 'effnetv2_xl', 'mobilenet_v3_large', 'mobilenet_v3_small'],
+parser.add_argument('--model-version', metavar='ARCH', default='mobilenet_v3_small',
+                    choices=['effnetv2_s', 'effnetv2_m', 'effnetv2_l', 'effnetv2_xl', 'mobilenet_v3_large', 'mobilenet_v3_small', 'resnet18', 'resnet50'],
                     help='model architecture')
-parser.add_argument('-j', '--workers', default=16, type=int, metavar='N',
+parser.add_argument('-j', '--workers', default=8, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
 parser.add_argument('--epochs', default=10, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=512, type=int,
+parser.add_argument('-b', '--batch-size', default=16, type=int,
                     metavar='N',
                     help='mini-batch size (default: 128), this is the total '
                          'batch size of all GPUs on the current node when '
@@ -81,23 +80,11 @@ parser.add_argument('--multiprocessing-distributed', action='store_true',
                          'N processes per node, which has N GPUs. This is the '
                          'fastest way to use PyTorch for either single node or '
                          'multi node data parallel training')
-# parser.add_argument('--identifier', default='effnetv2_s', help='identifier to be used.')
+parser.add_argument('--identifier', default='ex', help='identifier to be used.')
 best_acc1 = 0
 
 def main():
     args = parser.parse_args()
-    args.data = '/home/keti/storage/dataset/aihub_cropped/'
-    # args.data = '/home/keti/FER_AR/codes/FER/data/faces_extracted/'
-    args.identifier = f'{args.model_version}_epoch_{args.epochs}_lr_{args.lr}_loss_{args.batch_loss}'
-    #if args.seed is not None:
-    #    random.seed(args.seed)
-    #    torch.manual_seed(args.seed)
-    #    cudnn.deterministic = True
-    #    warnings.warn('You have chosen to seed training. '
-    #                  'This will turn on the CUDNN deterministic setting, '
-    #                  'which can slow down your training considerably! '
-    #                  'You may see unexpected behavior when restarting '
-    #                  'from checkpoints.')
 
     if args.gpu is not None:
         warnings.warn('You have chosen a specific GPU. This will completely '
@@ -210,41 +197,26 @@ def main_worker(gpu, ngpus_per_node, args):
     # cudnn.benchmark = True
 
     # Data loading code
-    # traindir = args.data
-    # testdir = args.data
-    traindir = os.path.join(args.data, 'train')
-    testdir = os.path.join(args.data, 'val')
-    # valdir = os.path.join(args.data, 'val')
-    # normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-    #                                  std=[0.229, 0.224, 0.225])
+    # traindir = os.path.join(args.data, 'train')
+    # testdir = os.path.join(args.data, 'test')
+    traindir = os.path.join('data/train')
+    testdir = os.path.join('data/test')
 
     train_dataset = datasets.ImageFolder(
         traindir,
-        transforms.Compose([
-            transforms.RandomResizedCrop(160, scale=(0.90, 1.0)),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            NormalizePerImage(),
-        ]))
+        transforms_train())
 
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
     else:
         train_sampler = None
 
-    transform_test = transforms.Compose([
-            transforms.CenterCrop(152),
-            transforms.Resize(160),
-            transforms.ToTensor(),
-            NormalizePerImage(),
-        ])
-
     random.seed(args.seed)
     random.shuffle(train_dataset.samples)
     num_val = int(0.1*len(train_dataset))
     num_tr = int(len(train_dataset) - num_val)
     train_dataset, val_dataset = torch.utils.data.random_split(train_dataset, [num_tr, num_val], generator=torch.Generator().manual_seed(args.seed))
-    val_dataset.transform = transform_test
+    val_dataset.transform = transforms_test()
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=True,
         num_workers=args.workers, pin_memory=True, persistent_workers=True)
@@ -254,9 +226,9 @@ def main_worker(gpu, ngpus_per_node, args):
         num_workers=args.workers, pin_memory=True, persistent_workers=True)
 
     test_loader = torch.utils.data.DataLoader(
-        datasets.ImageFolder(testdir, transform_test),
+        datasets.ImageFolder(testdir, transforms_test()),
         batch_size=args.batch_size, shuffle=False,
-        num_workers=args.workers, pin_memory=True, persistent_workers=True)
+        num_workers=0, pin_memory=False, persistent_workers=False)
 
     if args.scheduler == 'multi':
         scheduler = CosineAnnealingWarmUpRestarts(_optimizer, eta_max=args.lr * math.sqrt(args.batch_size),
@@ -393,7 +365,7 @@ def validate(val_loader, model, criterion, args):
                 loss = criterion(output, target)
 
             # measure accuracy and record loss
-            acc1, acc5 = accuracy(output, target, topk=(1, 5))
+            acc1, acc5 = accuracy(output, target, topk=(1, 2))
             # losses.update(loss.item(), images.size(0))
             top1.update(acc1[0], images.size(0))
 
