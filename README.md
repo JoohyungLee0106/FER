@@ -1,4 +1,4 @@
-# Facial Emotion Recognition @ [KETI](https://www.keti.re.kr)
+# Facial Emotion Recognition @ [Korea Electronics Technology Institute](https://www.keti.re.kr)
 This package supports 1) **Training**, 2) **Inferring**, 3) **real-time webcam** for Facial Emotion Recognition.
 
 ## 0. Dependencies
