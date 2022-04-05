@@ -1,5 +1,5 @@
 # Facial Emotion Recognition @ [Korea Electronics Technology Institute](https://www.keti.re.kr)
-This package supports 1) **Training**, 2) **Inferring**, 3) **real-time webcam** for Facial Emotion Recognition.
+This package supports 1) **Face extraction/alignment**, 2) **Training**, 3) **Inferring**, 4) **real-time webcam** for Facial Emotion Recognition.
 
 ## 0. Dependencies
 Install [PyTorch](https://pytorch.org/get-started/locally/).\
@@ -7,7 +7,7 @@ Install [OpenCV](https://pypi.org/project/opencv-python/).\
 Install [sklearn](https://anaconda.org/anaconda/scikit-learn).\
 Install PIL, matplotlib, numpy, etc.
 
-## 1. Extract (crop) and align face from an image
+## 1. Extract (crop) and align face from an image ([MTCNN](https://github.com/timesler/facenet-pytorch))
 ```python extract_face.py```
 
 ```DIR_IN```: raw image path (before face extraction). The code expects one-level hierarchy under DIR_IN (folders under ```DIR_IN```).\
