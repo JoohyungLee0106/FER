@@ -25,9 +25,9 @@ This code results in ```f'{args.identifier}_model_best.pth.tar'```
 Use ```f'{args.identifier}_model_best.pth.tar'``` from ```python train.py``` as --model.
 
 The user has three options for ```--image```:
-1) If --image is ```None```, the code test all images under ```--data``` path and save the results under ```--results```
-2) If --image is ```fault_finder```, the code makes csv file that includes how/what images were inferred incorrectly.
-3) If --image is a specific path to an image, the code prints the probability and the class with the maximum probability on console.
+1) If ```--image``` is ```None```, the code test all images under ```--data``` path and save the results under ```--results```
+2) If ```--image``` is ```fault_finder```, the code makes csv file that includes how/what images were inferred incorrectly.
+3) If ```--image``` is a specific path to an image, the code prints the probability and the class with the maximum probability on console.
 
 
 ## 4. Webcam
