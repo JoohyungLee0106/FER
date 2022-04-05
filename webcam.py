@@ -16,11 +16,7 @@ from utils.facenet_pytorch import MTCNN
 import cv2
 
 parser = argparse.ArgumentParser(description='Emotion inference from cropped face image')
-parser.add_argument('--data', type=str, default='/home/keti/FER_AR/codes/FER/data/faces_extracted')
-parser.add_argument('--model', type=str, default='/home/keti/FER_AR/codes/FER/checkpoint/efficientNetV2_m.pth.tar')
-parser.add_argument('--results', type=str, default='/home/keti/FER_AR/codes/FER/results')
-# parser.add_argument('--image', type=str, default='/home/keti/FER_AR/codes/FER/data/faces_extracted/중립/10.jpg')
-parser.add_argument('--image', type=str, default=None)
+parser.add_argument('--model', type=str, default='checkpoints/efficientNetV2_m.pth.tar')
 parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--resize-h', type=float, default=0)
 parser.add_argument('--fps', type=int, default=50)

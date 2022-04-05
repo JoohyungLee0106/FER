@@ -5,10 +5,10 @@ import shutil
 
 DIR_IN = 'data/raw_images_eng'
 
-# DIR_OUT = 'data/train'
-# NUM_IMAGES = 50
-DIR_OUT = 'data/test'
-NUM_IMAGES = -16
+DIR_OUT = 'data/train'
+NUM_IMAGES = 50
+# DIR_OUT = 'data/test'
+# NUM_IMAGES = -16
 
 if __name__ == "__main__":
     if os.path.isdir(DIR_OUT):
@@ -17,4 +17,3 @@ if __name__ == "__main__":
 
     for emotion in os.listdir(DIR_IN):
         os.system(f"python utils/extract_face.py --input {DIR_IN}/{emotion} --output {DIR_OUT}/{emotion} --num-images {NUM_IMAGES}")
-
