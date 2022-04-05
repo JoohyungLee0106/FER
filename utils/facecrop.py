@@ -1,3 +1,4 @@
+# by 홍용준
 import cv2
 from multiprocessing.pool import ThreadPool
 import glob
