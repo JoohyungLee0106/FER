@@ -34,6 +34,6 @@ The user has three options for ```--image```:
 ## 4. Webcam
 ```python webcam.py```
 
-model(```*.pth.tar```) must exists at ```--model```.\
+model(```*.pth.tar```) must exist at ```--model```.\
 Use ```--gpu, --fps``` for your convenience.\
 ```--resize-h``` is 0 by default, which does not resize the input from the real-time webcam at all.
