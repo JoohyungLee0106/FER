@@ -22,6 +22,7 @@ This code results in ```f'{args.identifier}_model_best.pth.tar'```
 
 ## 3. Infer
 ```python infer.py```
+
 Use ```f'{args.identifier}_model_best.pth.tar'``` from ```python train.py``` as --model.
 
 The user has three options for ```--image```:
