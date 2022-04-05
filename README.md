@@ -10,7 +10,7 @@ Install PIL, matplotlib, numpy, etc.
 ## 1. Extract (crop) and align face from an image ([MTCNN](https://github.com/timesler/facenet-pytorch))
 ```python extract_face.py```
 
-```DIR_IN```: raw image path (before face extraction). The code expects one-level hierarchy under DIR_IN (folders under ```DIR_IN```).\
+```DIR_IN```: raw image path (before face extraction). The code expects one-level hierarchy under ```DIR_IN``` (folders under ```DIR_IN```).\
 ```DIR_OUT```: face data path (after face extraction) with same one-level hierarchy.\
 ```NUM_IMAGES```: number of images under each folder under DIR_IN to extract faces; 1) positive: from the first, 2) negative: from the last, 3) 0: all images
 
