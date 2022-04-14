@@ -7,6 +7,8 @@ Install [OpenCV](https://pypi.org/project/opencv-python/).\
 Install [sklearn](https://anaconda.org/anaconda/scikit-learn).\
 Install PIL, matplotlib, numpy, etc.
 
+This package is checked in Conda + Python3.8 + Cuda 11.1 + PyTorch LTS (with CUDA 11.1)
+
 ## 1. Extract (crop) and align face from an image ([MTCNN](https://github.com/timesler/facenet-pytorch))
 ```python extract_face.py```
 
