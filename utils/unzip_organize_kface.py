@@ -11,8 +11,8 @@ EXT='.jpg'
 # 본 코드의 input: zip파일 저장 위치
 ZIP_PATHS = '/media/keti/8tb/kface_zip'
 
-# 본 코드의 output: 본 코드를 통하여 압축이 풀리고 저장될 위치
-ZIP_PATHS_NEW = '/media/keti/8tb/kface'
+# 본 코드의 output: 본 코드를 통하여 압축이 풀리고 저장될 위치. 폴더를 미리 만들어둬야 함. 데이터셋을 알아서 SPLITS 별로 정리해준다.
+ZIP_PATHS_NEW = '../data/kface'
 # PERFIX_FILENAME = 'EMOIMG_'
 
 # 데이터셋 split
