@@ -7,7 +7,7 @@ import numpy as np
 import model.efficientNetV2 as models
 from PIL import Image
 import torchvision.datasets as datasets
-from utils.transforms import transformation_val as transform
+from utils.transforms import transforms_test as transform
 from utils.transforms import NormalizePerImage
 import glob
 from PIL import Image, ImageFont, ImageDraw
@@ -29,6 +29,8 @@ EMOTION =['HAPPY', 'EMBARRASED', 'ANGRY', 'ANXIOUS', 'HURT', 'SAD', 'NEUTRAL']
 FONT_SCALE=0.5
 FONT_COLOR=(255,255,255)
 FONT_THICKNESS=2
+normalize=NormalizePerImage()
+torch.cuda.set_device(0)
 
 camera = cv2.VideoCapture('rtsp://192.168.10.101:554/media/1/1')
 # camera = cv2.VideoCapture(0)
@@ -37,13 +39,9 @@ mtcnn = MTCNN(image_size=160, margin=8, device=torch.device('cuda:0'))
 # mtcnn = MTCNN(image_size=160, margin=8)
 
 efficient_net = models.__dict__['effnetv2_m'](num_classes=7)
-normalize=NormalizePerImage()
-
-torch.cuda.set_device(0)
 efficient_net = efficient_net.cuda(0)
-checkpoint = torch.load(args.model, map_location='cuda:0')
+checkpoint = torch.load(args.model, map_location=f'cuda:{args.gpu}')
 # checkpoint = torch.load(args.model)
-
 efficient_net.load_state_dict(checkpoint['state_dict'])
 efficient_net.eval()
 
@@ -57,7 +55,7 @@ else:
     FPS = camera.get(cv2.CAP_PROP_FPS)
 
 # assert(args.fps < FPS)
-SKIP_FRAME = round(FPS/float(args.fps))
+# SKIP_FRAME = round(FPS/float(args.fps))
 
 i = 0
 while True:
@@ -89,10 +87,14 @@ while True:
                 # draw.rectangle(boxes[0].tolist(), outline=(255, 0, 0), width=6)
                 # draw.text((int(boxes[0][0]), int(boxes[0][3])+3), EMOTION[torch.argmax(emotion)], font=ImageFont.truetype("fonts/gulim.ttc", 20), align ="left")
                     print(f'emotion: {EMOTION[torch.argmax(emotion)]}')
+
+        # 얼굴위치박스와 감정 텍스트가 덧입혀진 frame을 화면에 띄워줍니다
         cv2.imshow('DEMO', frame)
 
+        # args.fps기준으로 기다립니다.
         cv2.waitKey(int(1000/float(args.fps)))
 
+    # q 를 누르면 꺼집니다. 안꺼지면 ctrl+c 누르면 됩니다.
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
