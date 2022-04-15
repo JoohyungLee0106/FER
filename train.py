@@ -213,6 +213,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
     random.seed(args.seed)
     random.shuffle(train_dataset.samples)
+    # training set의 90%를 training set으로 사용하고 나머지 10%는 validation set으로 사용.
     num_val = int(0.1*len(train_dataset))
     num_tr = int(len(train_dataset) - num_val)
     train_dataset, val_dataset = torch.utils.data.random_split(train_dataset, [num_tr, num_val], generator=torch.Generator().manual_seed(args.seed))
@@ -240,6 +241,7 @@ def main_worker(gpu, ngpus_per_node, args):
                                                 div_factor=math.sqrt(args.batch_size),
                                                 cycle_momentum=args.if_momentum_scheduler)
 
+# FP-16 의 mixed-precision 훈련
     scaler = torch.cuda.amp.GradScaler()
     val_acc_list=[]
     epoch_best = 0
@@ -300,7 +302,7 @@ def train(train_loader, model, criterion, optimizer, epoch, scheduler, scaler, a
     # switch to train mode
     model.train()
 
-    end = time.time()
+    # end = time.time()
     for i, (images, target) in enumerate(train_loader):
         # measure data loading time
         # data_time.update(time.time() - end)
@@ -310,6 +312,7 @@ def train(train_loader, model, criterion, optimizer, epoch, scheduler, scaler, a
         if torch.cuda.is_available():
             target = target.cuda(args.gpu, non_blocking=True)
 
+        #  FP-16 사용
         with torch.cuda.amp.autocast():
             # compute output
             output = model(images)
@@ -362,10 +365,10 @@ def validate(val_loader, model, criterion, args):
             with torch.cuda.amp.autocast():
                 # compute output
                 output = model(images)
-                loss = criterion(output, target)
+                # loss = criterion(output, target)
 
             # measure accuracy and record loss
-            acc1, acc5 = accuracy(output, target, topk=(1, 2))
+            acc1, acc2 = accuracy(output, target, topk=(1, 2))
             # losses.update(loss.item(), images.size(0))
             top1.update(acc1[0], images.size(0))
 
@@ -383,9 +386,10 @@ def validate(val_loader, model, criterion, args):
 
 
 def save_checkpoint(state, is_best, args):
-    torch.save(state, f'{args.identifier}_checkpoint.pth.tar')
+    # torch.save(state, f'{args.identifier}_checkpoint.pth.tar')
     if is_best:
-        shutil.copyfile(f'{args.identifier}_checkpoint.pth.tar', f'{args.identifier}_model_best.pth.tar')
+        torch.save(state, f'{args.identifier}_model_best.pth.tar')
+        # shutil.copyfile(f'{args.identifier}_checkpoint.pth.tar', f'{args.identifier}_model_best.pth.tar')
 
 
 class AverageMeter(object):
