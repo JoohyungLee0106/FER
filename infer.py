@@ -61,10 +61,14 @@ def main():
         raise ValueError('Invalid model !!!')
 
     torch.cuda.set_device(args.gpu)
+    
+    # 명시된 gpu로의 모델 카피
     model = model.cuda(args.gpu)
+    # args.model 에서 모델weight 을 불러와서 args.gpu에 카피.
     checkpoint = torch.load(args.model, map_location=f'cuda:{args.gpu}')
+    # 위에서 카피된 모델weight를 gpu로 카피된 모델에 로딩시킴
     model.load_state_dict(checkpoint['state_dict'])
-    # model = torch.jit.load('checkpoint/mobilenet(emotion7).pth.tar')
+    # 훈련이 아니므로 eval 모드로 전환
     model.eval()
     if args.image == None:
         dataset = datasets.ImageFolder(args.data, transform=transforms_test())
@@ -181,12 +185,6 @@ class ProgressMeter(object):
         return '[' + fmt + '/' + fmt.format(num_batches) + ']'
 
 
-def adjust_learning_rate(optimizer, epoch, args):
-    """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
-    lr = args.lr * (0.1 ** (epoch // 30))
-    for param_group in optimizer.param_groups:
-        param_group['lr'] = lr
-
 
 def accuracy(output, target, topk=(1,)):
     """Computes the accuracy over the k top predictions for the specified values of k"""
@@ -207,31 +205,6 @@ def accuracy(output, target, topk=(1,)):
             correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=True)
             res.append(correct_k.mul_(100.0 / batch_size))
         return res
-
-# def get_confusion_matrix(model ,test_dataset,test_loader):
-#     y_pred = []
-#     y_true = []
-#     model.eval()
-#     with torch.no_grad():
-#         for image , label in test_loader:
-#             output =model(image)
-#             _, pred = output.topk(1, 1, True, True)
-#             pred = pred.t().cpu()
-#             pred = pred.tolist()
-#             pred = sum(pred, [])
-#             # if (pred == 1 or pred == 2):
-#             #     pred = 1
-#             y_pred.extend(pred)
-#     y_true = test_dataset.targets
-#     y_pred_label = np.unique(y_pred)
-#     cm = confusion_matrix(y_true , y_pred)
-#     conf_matrix = pd.DataFrame(cm , index =y_pred_label  , columns=y_pred_label)
-#     #conf_matrix = conf_matrix.loc[[0,1,4],:]        #감정 8개 학습, 감정3개예측할때
-#     conf_matrix =conf_matrix.rename(columns = {0 : 'Sad' , 1:'Angry' , 2:'Embarassed' , 3:'Happy', 4:'Neautral', 5:'Hurt', 6:'Anxoius' },
-#                                      index = {0 : 'Sad' , 1:'Angry' , 2:'Embarassed' , 3:'Happy', 4:'Neautral', 5:'Hurt', 6:'Anxoius' })
-#
-#     return conf_matrix
-
 
 
 if __name__ == '__main__':
