@@ -6,9 +6,9 @@ import shutil
 DIR_IN = 'data/raw_images_eng'
 
 DIR_OUT = 'data/train'
-NUM_IMAGES = 50
+NUM_IMAGES = 0
 # DIR_OUT = 'data/test'
-# NUM_IMAGES = -16
+# NUM_IMAGES = 0
 
 if __name__ == "__main__":
     if os.path.isdir(DIR_OUT):
