@@ -3,11 +3,17 @@ import glob
 import os
 from multiprocessing import Pool
 
+# 영상 확장자
 EXT='.jpg'
+
+# 본 코드의 input: zip파일 저장 위치
 ZIP_PATHS = '/media/keti/8tb/aihub_fer/zip/Training'
+
+# 본 코드의 output: 본 코드를 통하여 압축이 풀리고 저장될 위치
 ZIP_PATHS_NEW = '/media/keti/8tb/aihub_fer/train'
 # PERFIX_FILENAME = 'EMOIMG_'
 
+# 감정 클래스
 CATEGORIES = ['기쁨', '당황', '분노', '불안', '상처', '슬픔', '중립']
 
 for category in CATEGORIES:
