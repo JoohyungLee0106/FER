@@ -5,12 +5,20 @@ import shutil
 import multiprocessing
 from itertools import repeat
 
+# 영상 확장자
 EXT='.jpg'
+
+# 본 코드의 input: zip파일 저장 위치
 ZIP_PATHS = '/media/keti/8tb/kface_zip'
+
+# 본 코드의 output: 본 코드를 통하여 압축이 풀리고 저장될 위치
 ZIP_PATHS_NEW = '/media/keti/8tb/kface'
 # PERFIX_FILENAME = 'EMOIMG_'
 
+# 데이터셋 split
 SPLITS = ['train', 'val', 'test']
+
+# 감정 클래스
 CATEGORIES = ['Neutral', 'Happy', 'Sad']
 
 for split in SPLITS:
