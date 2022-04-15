@@ -9,8 +9,8 @@ EXT='.jpg'
 # 본 코드의 input: zip파일 저장 위치
 ZIP_PATHS = '/media/keti/8tb/aihub_fer/zip/Training'
 
-# 본 코드의 output: 본 코드를 통하여 압축이 풀리고 저장될 위치
-ZIP_PATHS_NEW = '/media/keti/8tb/aihub_fer/train'
+# 본 코드의 output: 본 코드를 통하여 압축이 풀리고 저장될 위치. 폴더를 미리 만들어둬야 함.
+ZIP_PATHS_NEW = '../data/aihub/train'
 # PERFIX_FILENAME = 'EMOIMG_'
 
 # 감정 클래스
