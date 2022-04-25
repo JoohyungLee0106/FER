@@ -26,6 +26,7 @@ from utils import LARC
 parser = argparse.ArgumentParser(description='PyTorch FER Training')
 # parser.add_argument('data', metavar='DIR',
 #                     help='path to dataset')
+parser.add_argument('--data', default='data', type=str, help='directory that includes train, (validation), and test folder.')
 parser.add_argument('--model-version', metavar='ARCH', default='mobilenet_v3_small',
                     choices=['effnetv2_s', 'effnetv2_m', 'effnetv2_l', 'effnetv2_xl', 'mobilenet_v3_large', 'mobilenet_v3_small', 'resnet18', 'resnet50'],
                     help='model architecture')
@@ -129,7 +130,7 @@ def main_worker(gpu, ngpus_per_node, args):
     if 'eff' in args.model_version:
         model = models.__dict__[args.model_version](num_classes = args.num_categories)
     else:
-        model = models.__dict__[args.model_version](num_classes=args.num_categories, pretrained=True)
+        model = models.__dict__[args.model_version](num_classes = args.num_categories, pretrained=True)
 
     if not torch.cuda.is_available():
         print('using CPU, this will be slow')
@@ -197,10 +198,9 @@ def main_worker(gpu, ngpus_per_node, args):
     # cudnn.benchmark = True
 
     # Data loading code
-    # traindir = os.path.join(args.data, 'train')
-    # testdir = os.path.join(args.data, 'test')
-    traindir = os.path.join('data/train')
-    testdir = os.path.join('data/test')
+    traindir = os.path.join(args.data, 'train')
+    testdir = os.path.join(args.data, 'test')
+    # val_dataset.transform = transforms_test()
 
     train_dataset = datasets.ImageFolder(
         traindir,
@@ -213,11 +213,21 @@ def main_worker(gpu, ngpus_per_node, args):
 
     random.seed(args.seed)
     random.shuffle(train_dataset.samples)
-    # training set의 90%를 training set으로 사용하고 나머지 10%는 validation set으로 사용.
-    num_val = int(0.1*len(train_dataset))
-    num_tr = int(len(train_dataset) - num_val)
-    train_dataset, val_dataset = torch.utils.data.random_split(train_dataset, [num_tr, num_val], generator=torch.Generator().manual_seed(args.seed))
-    val_dataset.transform = transforms_test()
+
+    if ('val' not in os.listdir(args.data)) and ('valication' not in os.listdir(args.data)):
+        # training set의 90%를 training set으로 사용하고 나머지 10%는 validation set으로 사용.
+        num_val = int(0.1*len(train_dataset))
+        num_tr = int(len(train_dataset) - num_val)
+        train_dataset, val_dataset = torch.utils.data.random_split(train_dataset, [num_tr, num_val], generator=torch.Generator().manual_seed(args.seed))
+
+    else:
+        if 'val' in os.listdir(args.data):
+            valdir = os.path.join(args.data, 'val')
+        elif 'valication' in os.listdir(args.data):
+            valdir = os.path.join(args.data, 'val')
+        val_dataset = train_dataset = datasets.ImageFolder(valdir,
+        transforms_test())
+
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=True,
         num_workers=args.workers, pin_memory=True, persistent_workers=True)

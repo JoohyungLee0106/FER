@@ -20,8 +20,9 @@ parser.add_argument('--workers', default=16, type=int, help='number of data load
 parser.add_argument('--batch-size', default=256, type=int, help='number of mini batch size (default: 256)')
 parser.add_argument('--model', type=str, default='mobilenet_v3_small_model_best.pth.tar')
 parser.add_argument('--results', type=str, default='results')
-parser.add_argument('--num-categories', default=7, type=int, help='number of categories (default: 7)')
-# parser.add_argument('--image', type=str, default='data/test/중립/10.jpg')
+# AI-HUB: ['HAPPY', 'EMBARRASED', 'ANGRY', 'ANXIOUS', 'HURT', 'SAD', 'NEUTRAL']
+# kface: ['HAPPY', 'NEUTRAL', 'SAD']
+parser.add_argument('--emotions', default=['HAPPY', 'EMBARRASED', 'ANGRY', 'ANXIOUS', 'HURT', 'SAD', 'NEUTRAL'], type=str, help='emotion categories')
 parser.add_argument('--image', type=str, default=None)
 parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--if-display-cm', action='store_true', help='If display confusion matrix heatmap')
@@ -33,30 +34,29 @@ def main():
         shutil.rmtree(args.results)
     os.mkdir(args.results)
 
-    if args.num_categories == 3:
-        EMOTION = ['기쁨', '중립', '슬픔']
-        EMOTION_eng = ['HAPPY', 'NEUTRAL', 'SAD']
-    elif args.num_categories == 7:
-        EMOTION = ['기쁨', '당황', '분노', '불안', '상처', '슬픔', '중립']
-        EMOTION_eng = ['HAPPY', 'EMBARRASED', 'ANGRY', 'ANXIOUS', 'HURT', 'SAD', 'NEUTRAL']
-
+    # if args.num_categories == 3:
+    #     EMOTION = ['기쁨', '중립', '슬픔']
+    #     EMOTION_eng = ['HAPPY', 'NEUTRAL', 'SAD']
+    # elif args.num_categories == 7:
+    #     EMOTION = ['기쁨', '당황', '분노', '불안', '상처', '슬픔', '중립']
+    #     EMOTION_eng = ['HAPPY', 'EMBARRASED', 'ANGRY', 'ANXIOUS', 'HURT', 'SAD', 'NEUTRAL']
 
     top1 = AverageMeter('Acc@1', ':6.2f')
     if 'effnetv2_s' in os.path.basename(args.model):
-        import model.efficientNetV2 as models
-        model = models.__dict__['effnetv2_s'](num_classes = args.num_categories)
+        # import model.efficientNetV2 as models
+        model = models.__dict__['effnetv2_s'](num_classes = len(args.emotions))
     elif 'effnetv2_m' in os.path.basename(args.model):
-        import model.efficientNetV2 as models
-        model = models.__dict__['effnetv2_m'](num_classes = args.num_categories)
+        # import model.efficientNetV2 as models
+        model = models.__dict__['effnetv2_m'](num_classes = len(args.emotions))
     elif 'effnetv2_l' in os.path.basename(args.model):
-        import model.efficientNetV2 as models
-        model = models.__dict__['effnetv2_l'](num_classes = args.num_categories)
+        # import model.efficientNetV2 as models
+        model = models.__dict__['effnetv2_l'](num_classes = len(args.emotions))
     elif 'mobilenet_v3_small' in os.path.basename(args.model):
-        import torchvision.models as models
-        model = models.__dict__['mobilenet_v3_small'](num_classes=args.num_categories)
+        # import torchvision.models as models
+        model = models.__dict__['mobilenet_v3_small'](num_classes=len(args.emotions))
     elif 'mobilenet_v3_large' in os.path.basename(args.model):
-        import torchvision.models as models
-        model = models.__dict__['mobilenet_v3_large'](num_classes=args.num_categories)
+        # import torchvision.models as models
+        model = models.__dict__['mobilenet_v3_large'](num_classes=len(args.emotions))
     else:
         raise ValueError('Invalid model !!!')
 
@@ -94,7 +94,7 @@ def main():
                     acc1, _ = accuracy(output, target, topk=(1, 2))
                     top1.update(acc1[0], images.size(0))
 
-        cm = confusion_matrix(y_true, y_pred, labels=list(range(args.num_categories)))
+        cm = confusion_matrix(y_true, y_pred, labels=list(range(len(args.emotions))))
         if args.if_display_cm:
             disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels = EMOTION_eng)
             disp.plot()
