@@ -26,13 +26,13 @@ from utils import LARC
 parser = argparse.ArgumentParser(description='PyTorch FER Training')
 # parser.add_argument('data', metavar='DIR',
 #                     help='path to dataset')
-parser.add_argument('--data', default='data', type=str, help='directory that includes train, (validation), and test folder.')
+parser.add_argument('--data', default='data/aihub', type=str, help='directory that includes train, (validation), and test folder.')
 parser.add_argument('--model-version', metavar='ARCH', default='mobilenet_v3_small',
                     choices=['effnetv2_s', 'effnetv2_m', 'effnetv2_l', 'effnetv2_xl', 'mobilenet_v3_large', 'mobilenet_v3_small', 'resnet18', 'resnet50'],
                     help='model architecture')
-parser.add_argument('-j', '--workers', default=8, type=int, metavar='N',
+parser.add_argument('-j', '--workers', default=1, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
-parser.add_argument('--epochs', default=100, type=int, metavar='N',
+parser.add_argument('--epochs', default=50, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
@@ -75,7 +75,7 @@ parser.add_argument('--batch-loss', metavar='LOSS_TYPE', type= str, default='FL'
                     choices=['CE', 'FL'])
 parser.add_argument('--if-momentum-scheduler', action='store_true', help='If use momentum scheduler')
 parser.add_argument('--scheduler', default='single', choices=[None, 'single', 'multi'], help='scheduler type. None for no scheduler.')
-parser.add_argument('--num-categories', default=7, type=int, help='number of categories (default: 7)')
+# parser.add_argument('--num-categories', default=7, type=int, help='number of categories (default: 7)')
 parser.add_argument('--multiprocessing-distributed', action='store_true',
                     help='Use multi-processing distributed training to launch '
                          'N processes per node, which has N GPUs. This is the '
@@ -127,6 +127,8 @@ def main_worker(gpu, ngpus_per_node, args):
                                 world_size=args.world_size, rank=args.rank)
     # create model
     print("=> creating model '{}'".format(args.model_version))
+    args.num_categories = len(os.listdir( os.path.join(args.data, 'train') ))
+
     if 'eff' in args.model_version:
         model = models.__dict__[args.model_version](num_classes = args.num_categories)
     else:
@@ -201,10 +203,8 @@ def main_worker(gpu, ngpus_per_node, args):
     traindir = os.path.join(args.data, 'train')
     testdir = os.path.join(args.data, 'test')
     # val_dataset.transform = transforms_test()
-
-    train_dataset = datasets.ImageFolder(
-        traindir,
-        transforms_train())
+    train_dataset = datasets.ImageFolder(traindir, transforms_train())
+    args.classes = list(train_dataset.classes)
 
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
@@ -214,19 +214,18 @@ def main_worker(gpu, ngpus_per_node, args):
     random.seed(args.seed)
     random.shuffle(train_dataset.samples)
 
-    if ('val' not in os.listdir(args.data)) and ('valication' not in os.listdir(args.data)):
+    if ('val' not in os.listdir(args.data)) and ('validation' not in os.listdir(args.data)):
         # training set의 90%를 training set으로 사용하고 나머지 10%는 validation set으로 사용.
         num_val = int(0.1*len(train_dataset))
         num_tr = int(len(train_dataset) - num_val)
         train_dataset, val_dataset = torch.utils.data.random_split(train_dataset, [num_tr, num_val], generator=torch.Generator().manual_seed(args.seed))
-
+        val_dataset.transform = transforms_test()
     else:
         if 'val' in os.listdir(args.data):
             valdir = os.path.join(args.data, 'val')
-        elif 'valication' in os.listdir(args.data):
-            valdir = os.path.join(args.data, 'val')
-        val_dataset = train_dataset = datasets.ImageFolder(valdir,
-        transforms_test())
+        elif 'validation' in os.listdir(args.data):
+            valdir = os.path.join(args.data, 'validation')
+        val_dataset = train_dataset = datasets.ImageFolder(valdir, transforms_test())
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=True,
@@ -273,6 +272,8 @@ def main_worker(gpu, ngpus_per_node, args):
         if not args.multiprocessing_distributed or (args.multiprocessing_distributed
                 and args.rank % ngpus_per_node == 0):
             save_checkpoint({
+                'classes': args.classes,
+                'model': args.model_version,
                 'epoch': epoch + 1,
                 'arch': args.model_version,
                 'state_dict': model.state_dict(),

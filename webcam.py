@@ -16,11 +16,7 @@ from utils.facenet_pytorch import MTCNN
 import cv2
 
 parser = argparse.ArgumentParser(description='Emotion inference from cropped face image')
-parser.add_argument('--model', type=str, default='checkpoints/efficientNetV2_m.pth.tar')
-
-# AI-HUB: ['HAPPY', 'EMBARRASED', 'ANGRY', 'ANXIOUS', 'HURT', 'SAD', 'NEUTRAL']
-# kface: ['HAPPY', 'NEUTRAL', 'SAD']
-parser.add_argument('--emotions', default=['HAPPY', 'EMBARRASED', 'ANGRY', 'ANXIOUS', 'HURT', 'SAD', 'NEUTRAL'], type=str, help='emotion categories')
+parser.add_argument('--model', type=str, default='ex_model_best.pth.tar')
 parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--resize-h', type=float, default=0)
 parser.add_argument('--fps', type=int, default=50)
@@ -36,35 +32,19 @@ FONT_THICKNESS=2
 normalize=NormalizePerImage()
 torch.cuda.set_device(args.gpu)
 
-camera = cv2.VideoCapture('rtsp://192.168.10.101:554/media/1/1')
-# camera = cv2.VideoCapture(0)
+# camera = cv2.VideoCapture('rtsp://192.168.10.101:554/media/1/1')
+camera = cv2.VideoCapture(0)
 
 mtcnn = MTCNN(image_size=160, margin=8, device=torch.device(f'cuda:{args.gpu}'))
 # mtcnn = MTCNN(image_size=160, margin=8)
 
-
-if 'effnetv2_s' in os.path.basename(args.model):
-    # import model.efficientNetV2 as models
-    model = models.__dict__['effnetv2_s'](num_classes=len(args.emotions))
-elif 'effnetv2_m' in os.path.basename(args.model):
-    # import model.efficientNetV2 as models
-    model = models.__dict__['effnetv2_m'](num_classes=len(args.emotions))
-elif 'effnetv2_l' in os.path.basename(args.model):
-    # import model.efficientNetV2 as models
-    model = models.__dict__['effnetv2_l'](num_classes=len(args.emotions))
-elif 'mobilenet_v3_small' in os.path.basename(args.model):
-    # import torchvision.models as models
-    model = models.__dict__['mobilenet_v3_small'](num_classes=len(args.emotions))
-elif 'mobilenet_v3_large' in os.path.basename(args.model):
-    # import torchvision.models as models
-    model = models.__dict__['mobilenet_v3_large'](num_classes=len(args.emotions))
-else:
-    raise ValueError('Invalid model !!!')
-
-# 명시된 gpu로의 모델 카피
-model = model.cuda(args.gpu)
 # args.model 에서 모델weight 을 불러와서 args.gpu에 카피.
 checkpoint = torch.load(args.model, map_location=f'cuda:{args.gpu}')
+args.emotions = list(checkpoint['classes'])
+model = models.__dict__[checkpoint['model']](num_classes=len(args.emotions))
+# 명시된 gpu로의 모델 카피
+model = model.cuda(args.gpu)
+
 # 위에서 카피된 모델weight를 gpu로 카피된 모델에 로딩시킴
 model.load_state_dict(checkpoint['state_dict'])
 # 훈련이 아니므로 eval 모드로 전환
@@ -87,7 +67,7 @@ while True:
     i += 1
     # if i == SKIP_FRAME:
     check, frame = camera.read()
-    print(f'frame: {frame.shape}')
+    # print(f'frame: {frame.shape}')
     if args.resize_h > 0:
         frame = cv2.resize(frame, (int(args.resize_h), int(args.resize_h*frame.shape[0]/float(frame.shape[1]))))
 
@@ -111,7 +91,7 @@ while True:
 
                 # draw.rectangle(boxes[0].tolist(), outline=(255, 0, 0), width=6)
                 # draw.text((int(boxes[0][0]), int(boxes[0][3])+3), args.emotions[torch.argmax(emotion)], font=ImageFont.truetype("fonts/gulim.ttc", 20), align ="left")
-                    print(f'emotion: {args.emotions[torch.argmax(emotion)]}')
+                #     print(f'emotion: {args.emotions[torch.argmax(emotion)]}')
 
         # 얼굴위치박스와 감정 텍스트가 덧입혀진 frame을 화면에 띄워줍니다
         cv2.imshow('DEMO', frame)

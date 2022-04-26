@@ -3,6 +3,7 @@ import torch
 import os
 # from model.MobileNet_V3 import *
 
+import model as models
 import torchvision.transforms as transforms
 import numpy as np
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
@@ -14,58 +15,32 @@ import glob
 import shutil
 
 parser = argparse.ArgumentParser(description='Emotion inference from cropped face image')
-parser.add_argument('--data', type=str, default='data/test')
-# parser.add_argument('--data', type=str, default='/home/keti/FER_AR/codes/FER/data/faces_extracted')
-parser.add_argument('--workers', default=16, type=int, help='number of data loading workers (default: 16)')
-parser.add_argument('--batch-size', default=256, type=int, help='number of mini batch size (default: 256)')
-parser.add_argument('--model', type=str, default='mobilenet_v3_small_model_best.pth.tar')
+parser.add_argument('--data', type=str, default='data/aihub/test')
+parser.add_argument('--workers', default=4, type=int, help='number of data loading workers (default: 16)')
+parser.add_argument('--batch-size', default=4, type=int, help='number of mini batch size (default: 256)')
+parser.add_argument('--model', type=str, default='ex_model_best.pth.tar')
 parser.add_argument('--results', type=str, default='results')
-# AI-HUB: ['HAPPY', 'EMBARRASED', 'ANGRY', 'ANXIOUS', 'HURT', 'SAD', 'NEUTRAL']
-# kface: ['HAPPY', 'NEUTRAL', 'SAD']
-parser.add_argument('--emotions', default=['HAPPY', 'EMBARRASED', 'ANGRY', 'ANXIOUS', 'HURT', 'SAD', 'NEUTRAL'], type=str, help='emotion categories')
 parser.add_argument('--image', type=str, default=None)
 parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--if-display-cm', action='store_true', help='If display confusion matrix heatmap')
 
 def main():
     args = parser.parse_args()
-
     if os.path.isdir(args.results):
         shutil.rmtree(args.results)
     os.mkdir(args.results)
 
-    # if args.num_categories == 3:
-    #     EMOTION = ['기쁨', '중립', '슬픔']
-    #     EMOTION_eng = ['HAPPY', 'NEUTRAL', 'SAD']
-    # elif args.num_categories == 7:
-    #     EMOTION = ['기쁨', '당황', '분노', '불안', '상처', '슬픔', '중립']
-    #     EMOTION_eng = ['HAPPY', 'EMBARRASED', 'ANGRY', 'ANXIOUS', 'HURT', 'SAD', 'NEUTRAL']
-
     top1 = AverageMeter('Acc@1', ':6.2f')
-    if 'effnetv2_s' in os.path.basename(args.model):
-        # import model.efficientNetV2 as models
-        model = models.__dict__['effnetv2_s'](num_classes = len(args.emotions))
-    elif 'effnetv2_m' in os.path.basename(args.model):
-        # import model.efficientNetV2 as models
-        model = models.__dict__['effnetv2_m'](num_classes = len(args.emotions))
-    elif 'effnetv2_l' in os.path.basename(args.model):
-        # import model.efficientNetV2 as models
-        model = models.__dict__['effnetv2_l'](num_classes = len(args.emotions))
-    elif 'mobilenet_v3_small' in os.path.basename(args.model):
-        # import torchvision.models as models
-        model = models.__dict__['mobilenet_v3_small'](num_classes=len(args.emotions))
-    elif 'mobilenet_v3_large' in os.path.basename(args.model):
-        # import torchvision.models as models
-        model = models.__dict__['mobilenet_v3_large'](num_classes=len(args.emotions))
-    else:
-        raise ValueError('Invalid model !!!')
+
+    # args.model 에서 모델weight 을 불러와서 args.gpu에 카피.
+    checkpoint = torch.load(args.model, map_location=f'cuda:{args.gpu}')
+    args.emotions = list(checkpoint['classes'])
+    model = models.__dict__[checkpoint['model']](num_classes=len(args.emotions))
 
     torch.cuda.set_device(args.gpu)
     
     # 명시된 gpu로의 모델 카피
     model = model.cuda(args.gpu)
-    # args.model 에서 모델weight 을 불러와서 args.gpu에 카피.
-    checkpoint = torch.load(args.model, map_location=f'cuda:{args.gpu}')
     # 위에서 카피된 모델weight를 gpu로 카피된 모델에 로딩시킴
     model.load_state_dict(checkpoint['state_dict'])
     # 훈련이 아니므로 eval 모드로 전환
@@ -74,9 +49,6 @@ def main():
         dataset = datasets.ImageFolder(args.data, transform=transforms_test())
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.workers, pin_memory=True)
 
-        # model = mobilenet_v3_large(pretrained=True, num_classes=7)
-        # checkpoint = torch.load(args.model)
-        # model.load_state_dict(checkpoint['state_dict'])
         y_pred = []
         y_true = []
 
@@ -96,7 +68,7 @@ def main():
 
         cm = confusion_matrix(y_true, y_pred, labels=list(range(len(args.emotions))))
         if args.if_display_cm:
-            disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels = EMOTION_eng)
+            disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels = args.emotions)
             disp.plot()
             plt.show()
         np.savetxt(os.path.join(args.results, f"{os.path.basename(args.model.replace('.pth.tar',''))}.csv"), cm, delimiter=",",fmt ='%u')
@@ -105,18 +77,16 @@ def main():
             # f.write(cm)
         # print(f'acc: {top1.avg}')
 
-
-
     elif args.image == 'fault_finder':
         if os.path.isdir(os.path.join(args.results, f"fault_finder.csv")):
             shutil.rmtree(os.path.join(args.results, f"fault_finder.csv"))
 
         transform = transforms_test()
 
-        for i, emo in enumerate(EMOTION):
+        for i, emo in enumerate(args.emotions):
             with open(os.path.join(args.results, f"fault_finder.csv"), 'a') as f:
                 f.write(f'\n{emo}\n')
-            for path in glob.glob(args.data+f'/{emo}/*.jpg'):
+            for path in glob.glob(os.path.join(args.data, f'{emo}/*.jpg')):
                 img = Image.open(path)
                 img = torch.unsqueeze(transform(img).cuda(args.gpu, non_blocking=True), 0)
 
@@ -137,11 +107,11 @@ def main():
             output = model(img)
             prob = torch.nn.functional.softmax(output)
             emotion_dict = {}
-            for i, em in enumerate(EMOTION):
+            for i, em in enumerate(args.emotions):
                 emotion_dict[em] = round(prob.tolist()[0][i]*100,2)
             # emotion_dict['']
             print(f'결과(확률): {emotion_dict}')
-            print(f'감정: {EMOTION[torch.argmax(output)]}')
+            print(f'감정: {args.emotions[torch.argmax(output)]}')
 
 
 class AverageMeter(object):
