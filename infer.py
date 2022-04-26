@@ -16,7 +16,7 @@ import shutil
 
 parser = argparse.ArgumentParser(description='Emotion inference from cropped face image')
 parser.add_argument('--data', type=str, default='data/aihub/test')
-parser.add_argument('--workers', default=4, type=int, help='number of data loading workers (default: 16)')
+parser.add_argument('--workers', default=16, type=int, help='number of data loading workers (default: 16)')
 parser.add_argument('--batch-size', default=4, type=int, help='number of mini batch size (default: 256)')
 parser.add_argument('--model', type=str, default='ex_model_best.pth.tar')
 parser.add_argument('--results', type=str, default='results')

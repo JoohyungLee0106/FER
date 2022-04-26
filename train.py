@@ -30,9 +30,9 @@ parser.add_argument('--data', default='data/aihub', type=str, help='directory th
 parser.add_argument('--model-version', metavar='ARCH', default='mobilenet_v3_small',
                     choices=['effnetv2_s', 'effnetv2_m', 'effnetv2_l', 'effnetv2_xl', 'mobilenet_v3_large', 'mobilenet_v3_small', 'resnet18', 'resnet50'],
                     help='model architecture')
-parser.add_argument('-j', '--workers', default=1, type=int, metavar='N',
+parser.add_argument('-j', '--workers', default=16, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
-parser.add_argument('--epochs', default=50, type=int, metavar='N',
+parser.add_argument('--epochs', default=100, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
