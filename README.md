@@ -1,4 +1,4 @@
-# Facial Emotion Recognition @ [Korea Electronics Technology Institute](https://www.keti.re.kr)
+# Facial Emotion Recognition
 This package supports 1) **Face extraction/alignment**, 2) **Training**, 3) **Inferring**, 4) **real-time webcam** for Facial Emotion Recognition.
 
 ## 0. Dependencies
